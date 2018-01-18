@@ -124,7 +124,7 @@ public class GmessageLib {
      * @param phone
      * @param process_id
      * @param accesscode
-     * @return 验证结果,0表示验证成功1表示验证失败
+     * @return 验证结果,1表示验证成功0表示验证失败
      */
     public int checkGateway(String phone, String process_id,
         String accesscode) {
