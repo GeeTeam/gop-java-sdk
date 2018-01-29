@@ -6,16 +6,39 @@
  */
 package sdk;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
 import java.io.OutputStreamWriter;
+import java.math.BigInteger;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import org.json.JSONException;
 import org.json.JSONObject;
+import java.security.InvalidKeyException;
+import java.security.Key;
+import java.security.KeyFactory;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import java.sql.Timestamp;
+import java.util.Map;
 
+import sdk.RSA;
 /**
  * Onepass服务的SDK
  * 
@@ -27,14 +50,14 @@ public class GmessageLib {
 
     protected final String sdkLang = "java";// SD的语言类型
 
-    protected final String apiUrl = "http://onepass.geetest.com"; //Onepass验证API URL
+    //protected final String apiUrl = "http://onepass.geetest.com"; //Onepass验证API URL
+    protected final String apiUrl = "http://127.0.0.1:8885"; //Onepass验证API URL
 
     protected final String baseUrl = "onepass.geetest.com";
 
     protected final String checkGatewayUrl = "/check_gateway.php"; //check gateway url
 
     protected final String checkMessageUrl = "/check_message.php"; //check message url
-
     /**
      * 公钥
      */
@@ -180,6 +203,71 @@ public class GmessageLib {
 
     }
 
+    public int checkGateway(String phone, String process_id,
+            String accesscode, boolean testbutton){
+        if (!resquestIsLegal(phone, process_id, accesscode)) {
+            return 0;
+        }
+        gtlog("request legitimate");
+        
+        Long ts = System.currentTimeMillis();
+        gtlog(String.valueOf(ts));
+        String ts_str = String.valueOf(ts);
+        String sign_data = this.customid + "&&" + this.md5Encode(this.privateKey) + "&&" + ts_str;
+        String sign = "";
+        try{
+            sign = RSA.encryptByPublicKey(sign_data);
+            }
+        catch (Exception e) {
+			e.printStackTrace();
+			gtlog(e.getMessage());
+		}
+		String test ="test";
+        String host = apiUrl;
+        String path = checkGatewayUrl;
+        String Url = host + path;
+        String query = String.format(
+            "accesscode=%s&custom=%s&process_id=%s&phone=%s&sdk=%s&sign=%s", accesscode,
+            customid, process_id, phone, (this.sdkLang + "_" + this.verName),sign);
+        String response = "";
+
+        if (this.userId != "") {
+            query = query + "&user_id=" + this.userId;
+            this.userId = "";
+        }
+        gtlog(query);
+        try {
+            gtlog("checkGatewayWithoutTestButtonResultByPrivate");
+            response = readContentFromPost(Url, query);
+            gtlog("response: " + response);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        try {
+            JSONObject return_map = new JSONObject(response);
+            int result = return_map.getInt("result");
+            String recheck_custom_id = return_map.getString("content");
+            if (result == 0) {
+                if (checkResultByPrivate(process_id, recheck_custom_id)) {
+                    return 1;
+                } else {
+                    return 0;
+                }
+            } else {
+
+                return 0;
+
+            }
+
+        } catch (JSONException e) {
+            e.getStackTrace();
+            System.out.println(e);
+            gtlog("json load error");
+            return 0;
+        }
+    	
+    }
     /**
      * message的验证接口，向onepass服务器进行验证，获取验证结果
      * 
@@ -320,7 +408,7 @@ public class GmessageLib {
      * @param plainText
      * @return
      */
-    private String md5Encode(String plainText) {
+    private static String md5Encode(String plainText) {
         String re_md5 = new String();
         try {
             MessageDigest md = MessageDigest.getInstance("MD5");
@@ -344,5 +432,22 @@ public class GmessageLib {
         }
         return re_md5;
     }
+       public static void main(String[] args){    
+   	//测试字符串    
+   	   String res = md5Encode("25c6fcdc384a8a99234240a8e30c76dcgtmessageab8879bc39fdc6c126db73de28023eaa");
+   	   System.out.println(res);
+       String encryptStr= "fd2cf5e6589a7ceccbc1cc57f6b299a4&&a43777b86615e6e3903b60c9c21f275f&&1512008420";  
+       String test = md5Encode(encryptStr);
+       try {    
+           System.out.println("明文："+encryptStr);
+           GmessageLib gm = new GmessageLib("fd2cf5e6589a7ceccbc1cc57f6b299a4","a8ee5dddc2122f874d47785971d54726");
+           int result = gm.checkGateway("18571472767","a8ee5dddc2122f874d47785971d54726","sadaszxvasddasdascxzcdsasadxcasdqwe",false);
+           
+            String cipherStr = RSA.encryptByPublicKey(encryptStr);
+            System.out.println("公钥加密密文："+cipherStr);
+        } catch (Exception e) {    
+            System.err.println(e.getMessage());    
+        }   
 
+        }
 }
