@@ -50,8 +50,7 @@ public class GmessageLib {
 
     protected final String sdkLang = "java";// SD的语言类型
 
-    //protected final String apiUrl = "http://onepass.geetest.com"; //Onepass验证API URL
-    protected final String apiUrl = "http://127.0.0.1:8885"; //Onepass验证API URL
+    protected final String apiUrl = "http://onepass.geetest.com"; //Onepass验证API URL
 
     protected final String baseUrl = "onepass.geetest.com";
 
