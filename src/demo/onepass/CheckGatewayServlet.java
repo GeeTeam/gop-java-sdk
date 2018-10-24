@@ -44,7 +44,7 @@ public class CheckGatewayServlet extends HttpServlet {
         String accesscode = request.getParameter("accesscode");
 
         // 调用Gmessagelib的对象的checkGateway方法，并将参数以固定顺序传入。返回值为1则代表成功，返回值为0则代表失败
-        int result = gtmessagesdk.checkGateway(phone, process_id, accesscode,false);
+        int result = gtmessagesdk.checkGateway(phone, process_id, accesscode);
         try {
             PrintWriter out = response.getWriter();
             JSONObject data = new JSONObject();

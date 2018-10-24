@@ -149,61 +149,8 @@ public class GmessageLib {
      * @return 验证结果,1表示验证成功0表示验证失败
      */
     public int checkGateway(String phone, String process_id,
-        String accesscode) {
-
-        if (!resquestIsLegal(phone, process_id, accesscode)) {
-            return 0;
-        }
-        gtlog("request legitimate");
-
-        String host = apiUrl;
-        String path = checkGatewayUrl;
-        String Url = host + path;
-        String query = String.format(
-            "accesscode=%s&custom=%s&process_id=%s&phone=%s&sdk=%s", accesscode,
-            customid, process_id, phone, (this.sdkLang + "_" + this.verName));
-        String response = "";
-
-        if (this.userId != "") {
-            query = query + "&user_id=" + this.userId;
-            this.userId = "";
-        }
-        gtlog(query);
-        try {
-            gtlog("checkGatewayResultByPrivate");
-            response = readContentFromPost(Url, query);
-            gtlog("response: " + response);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        try {
-            JSONObject return_map = new JSONObject(response);
-            int result = return_map.getInt("result");
-            String recheck_custom_id = return_map.getString("content");
-            if (result == 0) {
-                if (checkResultByPrivate(process_id, recheck_custom_id)) {
-                    return 1;
-                } else {
-                    return 0;
-                }
-            } else {
-
-                return 0;
-
-            }
-
-        } catch (JSONException e) {
-            e.getStackTrace();
-            System.out.println(e);
-            gtlog("json load error");
-            return 0;
-        }
-
-    }
-
-    public int checkGateway(String phone, String process_id,
-            String accesscode, boolean testbutton){
+            String accesscode){
+        
         if (!resquestIsLegal(phone, process_id, accesscode)) {
             return 0;
         }
